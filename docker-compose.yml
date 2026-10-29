@@ -1,0 +1,75 @@
+name: seps-practicas
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-seps}
+      POSTGRES_USER: ${POSTGRES_USER:-seps}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD en .env}
+      METABASE_APP_DB: ${METABASE_APP_DB:-metabase_app}
+      METABASE_APP_USER: ${METABASE_APP_USER:-metabase_app}
+      METABASE_APP_PASSWORD: ${METABASE_APP_PASSWORD:?Configura METABASE_APP_PASSWORD en .env}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d:ro
+      - ./data:/seps-data:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-seps} -d ${POSTGRES_DB:-seps}"]
+      interval: 5s
+      retries: 20
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:15678:5678"
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-seps}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-seps}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD en .env}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?Configura N8N_ENCRYPTION_KEY en .env}
+      GENERIC_TIMEZONE: America/Guayaquil
+      TZ: America/Guayaquil
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n:/seps-workflows:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+  metabase:
+    image: metabase/metabase:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:13000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: ${METABASE_APP_DB:-metabase_app}
+      MB_DB_PORT: 5432
+      MB_DB_USER: ${METABASE_APP_USER:-metabase_app}
+      MB_DB_PASS: ${METABASE_APP_PASSWORD:?Configura METABASE_APP_PASSWORD en .env}
+      MB_DB_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+  etl:
+    profiles: ["python-etl"]
+    build: ./etl
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-seps}:${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD en .env}@postgres:5432/${POSTGRES_DB:-seps}
+      SOURCE_ZIP: /data/2026-OEPS-MEN.zip
+    volumes:
+      - ./data:/data:ro
+    ports:
+      - "127.0.0.1:18080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  postgres_data:
+  n8n_data:

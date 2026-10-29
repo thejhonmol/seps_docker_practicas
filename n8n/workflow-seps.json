@@ -1,0 +1,70 @@
+{
+  "name": "SEPS 2026 - Importación y control de calidad",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-seps",
+      "name": "Ejecutar importación",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://etl:8080/run",
+        "options": {"timeout": 600000}
+      },
+      "id": "http-etl-seps",
+      "name": "Importar y validar datos SEPS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "combinator": "and",
+          "conditions": [
+            {"id": "check-status", "leftValue": "={{ $json.status }}", "rightValue": "ok", "operator": {"type": "string", "operation": "equals"}}
+          ]
+        }
+      },
+      "id": "if-success-seps",
+      "name": "Importación correcta",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [710, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json; return [{json: {mensaje:'Carga SEPS realizada',importacion_id:r.importacion_id,registros_leidos:r.read,registros_validos:r.valid,registros_rechazados:r.rejected,fecha:new Date().toISOString()}}];"
+      },
+      "id": "summary-seps",
+      "name": "Resumen ETL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "throw new Error('La importación SEPS devolvió un estado inesperado: '+ JSON.stringify($input.first().json));"
+      },
+      "id": "error-seps",
+      "name": "Error de calidad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 410]
+    }
+  ],
+  "connections": {
+    "Ejecutar importación": {"main": [[{"node":"Importar y validar datos SEPS","type":"main","index":0}]]},
+    "Importar y validar datos SEPS": {"main": [[{"node":"Importación correcta","type":"main","index":0}]]},
+    "Importación correcta": {"main": [
+      [{"node":"Resumen ETL","type":"main","index":0}],
+      [{"node":"Error de calidad","type":"main","index":0}]
+    ]}
+  },
+  "settings": {"executionOrder": "v1"}
+}

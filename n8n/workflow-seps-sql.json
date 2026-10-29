@@ -1,0 +1,45 @@
+{
+  "id":"SEPS2026ETL00001",
+  "name":"SEPS 2026 - ETL PostgreSQL y controles",
+  "nodes":[
+    {
+      "parameters":{},
+      "id":"manual-etl",
+      "name":"Iniciar importación",
+      "type":"n8n-nodes-base.manualTrigger",
+      "typeVersion":1,
+      "position":[240,300]
+    },
+    {
+      "parameters":{
+        "operation":"executeQuery",
+        "query":"SELECT * FROM seps.cargar_organizaciones();",
+        "options":{}
+      },
+      "id":"pg-etl",
+      "name":"ETL SEPS desde archivo oficial",
+      "type":"n8n-nodes-base.postgres",
+      "typeVersion":2.6,
+      "position":[480,300],
+      "credentials":{"postgres":{"id":"seps-pg","name":"SEPS PostgreSQL"}}
+    },
+    {
+      "parameters":{
+        "operation":"executeQuery",
+        "query":"SELECT fecha_corte, organizaciones, activas, provincias FROM seps.v_indicadores ORDER BY fecha_corte DESC;",
+        "options":{}
+      },
+      "id":"pg-metrics",
+      "name":"Validar indicadores",
+      "type":"n8n-nodes-base.postgres",
+      "typeVersion":2.6,
+      "position":[730,300],
+      "credentials":{"postgres":{"id":"seps-pg","name":"SEPS PostgreSQL"}}
+    }
+  ],
+  "connections":{
+    "Iniciar importación":{"main":[[{"node":"ETL SEPS desde archivo oficial","type":"main","index":0}]]},
+    "ETL SEPS desde archivo oficial":{"main":[[{"node":"Validar indicadores","type":"main","index":0}]]}
+  },
+  "settings":{"executionOrder":"v1"}
+}

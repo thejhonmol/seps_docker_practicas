@@ -1,0 +1,11 @@
+Actividad,Resultado aprendizaje,Entregable,Fecha programada,Fecha real,Estado,Evidencia
+1,RA2,Investigación n8n,,,Preparado,Pendiente captura/documentación
+2,RA2,Investigación Docker,,,Preparado,Pendiente captura/documentación
+3,RA5,Despliegue Docker,,,Verificado,Servicios PostgreSQL n8n y Metabase
+4,RA3,Normalización de datos,,,Verificado,SQL y auditoría CSV
+5,RA5,Base de datos PostgreSQL,,,Verificado,Schema y consultas
+6,RA5,ETL n8n,,,Verificado,Ejecución CLI status success
+7,RA5,Conexión PostgreSQL Metabase,,,Verificado,Consultas Metabase API completadas
+8,RA4,Dashboard Metabase,,,Verificado,Dashboard 2 con 7 preguntas y 2 filtros
+9,RA6,Informe ejecutivo,,,Borrador,Completar capturas y firma
+10,RA5,Entrega puntual de documentos,,,Por verificar,Registrar constancia de entrega

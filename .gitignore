@@ -1,0 +1,7 @@
+.env
+data/*.zip
+data/*.txt
+n8n/*.secret.json
+__pycache__/
+*.py[cod]
+*$py.class
