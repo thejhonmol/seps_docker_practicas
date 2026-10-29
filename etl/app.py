@@ -1,91 +1,81 @@
-import csv
-import io
+"""Atomic import with a durable run log and per-cell source provenance."""
 import os
-import re
-import unicodedata
-import zipfile
-from datetime import datetime
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
 import psycopg
+from parser import FIELDS, read_zip, sha256
 
-api = FastAPI(title="SEPS ETL")
-SOURCE = os.getenv("SOURCE_ZIP", "/data/2026-OEPS-MEN.zip")
-DB = os.environ["DATABASE_URL"]
-COLUMNS = ["fecha_corte", "estado_juridico", "sector", "tipo", "grupo", "clase",
-           "subclase", "provincia", "canton", "parroquia", "numero_organizaciones",
-           "codigo_parroquia", "razon_social", "ruc"]
-INSERT = """INSERT INTO seps.organizaciones
- (fecha_corte,estado_juridico,sector,tipo,grupo,clase,subclase,provincia,canton,parroquia,
- numero_organizaciones,codigo_parroquia,razon_social,ruc)
- VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
- ON CONFLICT (fecha_corte,ruc) DO UPDATE SET
- razon_social=excluded.razon_social, estado_juridico=excluded.estado_juridico,
- sector=excluded.sector,tipo=excluded.tipo,grupo=excluded.grupo,clase=excluded.clase,
- subclase=excluded.subclase,provincia=excluded.provincia,canton=excluded.canton,
- parroquia=excluded.parroquia,numero_organizaciones=excluded.numero_organizaciones,
- codigo_parroquia=excluded.codigo_parroquia,actualizado=now()"""
+api = FastAPI(title='SEPS boletines financieros')
+SOURCE = os.getenv('SOURCE_ZIP', '/data/2026-EEFF-MEN.zip')
 
-def tidy(v):
-    return re.sub(r"\s+", " ", (v or "").strip()).upper()
 
-def normalized(row):
-    if len(row) != len(COLUMNS):
-        raise ValueError(f"columnas incorrectas: {len(row)}")
-    x = dict(zip(COLUMNS, row))
-    ruc = x["ruc"].strip()
-    if not re.fullmatch(r"\d{13}", ruc):
-        raise ValueError("RUC inválido")
-    try:
-        # SEPS uses dates such as 2026-1-31 (not strictly zero-padded ISO).
-        fecha = datetime.strptime(x["fecha_corte"].strip(), "%Y-%m-%d").date()
-    except ValueError:
-        raise ValueError("fecha inválida")
-    if not x["razon_social"].strip():
-        raise ValueError("razón social vacía")
-    return [fecha] + [tidy(x[k]) for k in COLUMNS[1:10]] + [
-        int(x["numero_organizaciones"]), x["codigo_parroquia"].strip(),
-        re.sub(r"\s+", " ", x["razon_social"].strip()), ruc
-    ]
+def connect():
+    # Separate parameters support passwords containing URL-reserved characters.
+    return psycopg.connect(host=os.getenv('PGHOST', 'postgres'),
+                          dbname=os.getenv('PGDATABASE', 'seps'),
+                          user=os.getenv('PGUSER', 'seps'),
+                          password=os.environ['PGPASSWORD'])
 
-@api.get("/health")
+
+@api.get('/health')
 def health():
-    with psycopg.connect(DB) as conn:
-        conn.execute("SELECT 1").fetchone()
-    return {"status": "ok"}
+    with connect() as conn:
+        ready = conn.execute("SELECT to_regclass('seps_fin.valores') IS NOT NULL").fetchone()[0]
+    if not ready:
+        raise HTTPException(503, 'Aplicar sql/01_schema.sql antes de importar')
+    return {'status': 'ok', 'source_available': Path(SOURCE).is_file()}
 
-@api.post("/run")
+
+@api.post('/run')
 def run():
-    if not os.path.isfile(SOURCE):
-        raise HTTPException(404, f"Archivo ZIP no encontrado: {SOURCE}")
-    with psycopg.connect(DB) as conn:
-        run_id = conn.execute(
-            "INSERT INTO seps.importaciones(origen) VALUES (%s) RETURNING id",
-            ("SEPS Organizaciones 2026",)).fetchone()[0]
-        counts = {"read": 0, "valid": 0, "rejected": 0}
-        batch = []
-        with zipfile.ZipFile(SOURCE) as z:
-            with z.open("2026.txt") as source:
-                reader = csv.reader(io.TextIOWrapper(source, encoding="utf-8-sig", newline=""), delimiter="\t")
-                next(reader, None)
-                for number, row in enumerate(reader, start=2):
-                    counts["read"] += 1
-                    try:
-                        batch.append(normalized(row))
-                        counts["valid"] += 1
-                    except (ValueError, TypeError) as exc:
-                        counts["rejected"] += 1
-                        conn.execute("INSERT INTO seps.rechazos(importacion_id,fila,motivo,raw) VALUES(%s,%s,%s,%s)",
-                                     (run_id, number, str(exc), str(row)[:3000]))
-                    if len(batch) >= 1000:
-                        with conn.cursor() as cursor:
-                            cursor.executemany(INSERT, batch)
-                        conn.commit()
-                        batch.clear()
-                if batch:
-                    with conn.cursor() as cursor:
-                        cursor.executemany(INSERT, batch)
-        conn.execute("""UPDATE seps.importaciones SET finalizado=now(),registros_leidos=%s,
-        registros_validos=%s,registros_rechazados=%s,estado='finalizada' WHERE id=%s""",
-                     (counts["read"],counts["valid"],counts["rejected"],run_id))
+    if not Path(SOURCE).is_file():
+        raise HTTPException(404, 'Copiar 2026-EEFF-MEN.zip a data/; ver README')
+    fingerprint = sha256(SOURCE)
+    with connect() as conn:
+        if not conn.execute('SELECT pg_try_advisory_lock(20260930)').fetchone()[0]:
+            raise HTTPException(409, 'Ya hay una importación financiera en curso')
+        run_id = conn.execute('INSERT INTO seps_fin.importaciones(origen,sha256) VALUES(%s,%s) RETURNING id',
+                              (Path(SOURCE).name, fingerprint)).fetchone()[0]
         conn.commit()
-    return {"importacion_id":run_id, **counts, "status":"ok"}
+        counts = dict(read=0, valid=0, observed=0)
+        try:
+            # Transaction rollback preserves the last good dataset on any structural failure.
+            with conn.transaction():
+                conn.execute('CREATE TEMP TABLE stage (LIKE seps_fin.valores INCLUDING DEFAULTS) ON COMMIT DROP')
+                conn.execute('CREATE TEMP TABLE notes(archivo TEXT,hoja TEXT,celda TEXT,motivo TEXT) ON COMMIT DROP')
+                notes = []
+                with conn.cursor() as cur:
+                    with cur.copy('COPY stage (' + ','.join(FIELDS) + ',importacion_id) FROM STDIN') as copy:
+                        for r in read_zip(SOURCE):
+                            counts['read'] += 1
+                            counts['valid' if r['estado']=='valido' else 'observed'] += 1
+                            copy.write_row(tuple(r[k] for k in FIELDS) + (run_id,))
+                            if r['estado'] != 'valido':
+                                notes.append((r['archivo'], r['hoja'], r['celda'], r['motivo']))
+                    with cur.copy('COPY notes FROM STDIN') as copy:
+                        for note in notes:
+                            copy.write_row(note)
+                if not counts['valid']:
+                    raise ValueError('La fuente no contiene valores numéricos válidos')
+                if sha256(SOURCE) != fingerprint:
+                    raise ValueError('La fuente cambió durante la lectura; repetir con un ZIP estable')
+                # Replace only group-period slices represented by the validated source.
+                conn.execute('''DELETE FROM seps_fin.valores v USING
+                  (SELECT DISTINCT fecha_corte,segmento FROM stage) s
+                  WHERE v.fecha_corte=s.fecha_corte AND v.segmento=s.segmento''')
+                conn.execute('INSERT INTO seps_fin.valores SELECT * FROM stage')
+                conn.execute('''INSERT INTO seps_fin.observaciones(importacion_id,archivo,hoja,celda,motivo)
+                                SELECT %s,archivo,hoja,celda,motivo FROM notes''', (run_id,))
+                conn.execute('''UPDATE seps_fin.importaciones SET finalizado=now(),estado='finalizada',
+                  registros_leidos=%s,registros_validos=%s,registros_observados=%s WHERE id=%s''',
+                  (counts['read'],counts['valid'],counts['observed'],run_id))
+        except Exception as exc:
+            conn.rollback()
+            conn.execute("UPDATE seps_fin.importaciones SET estado='fallida',finalizado=now(),error=%s WHERE id=%s",
+                         (str(exc)[:2000],run_id))
+            conn.commit()
+            raise HTTPException(422, f'Importación {run_id} fallida; revisar seps_fin.importaciones') from exc
+        finally:
+            conn.execute('SELECT pg_advisory_unlock(20260930)')
+            conn.commit()
+    return dict(importacion_id=run_id, status='ok', sha256=fingerprint, **counts)

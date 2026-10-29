@@ -1,0 +1,255 @@
+{
+  "archivo": "2026-EEFF-MEN.zip",
+  "sha256": "bbf11db7bfc043ad852e770a7eba013e84e5bf210c630a24f31572651628dc0b",
+  "celdas": 281950,
+  "estados": {
+    "valido": 263703,
+    "sin_dato": 18238,
+    "error_excel": 9
+  },
+  "tipos": {
+    "cuenta": 270164,
+    "indicador": 11786
+  },
+  "entidades_por_grupo": {
+    "CONAFIPS": 1,
+    "FINANCOOP": 1,
+    "Mutualistas": 4,
+    "Segmento 1": 44,
+    "Segmento 2": 66,
+    "Segmento 3": 91
+  },
+  "periodos_por_grupo": {
+    "CONAFIPS": [
+      "2026-01-31",
+      "2026-02-28",
+      "2026-03-31",
+      "2026-04-30",
+      "2026-05-31",
+      "2026-06-30",
+      "2026-07-31",
+      "2026-08-31",
+      "2026-09-30"
+    ],
+    "FINANCOOP": [
+      "2026-01-31",
+      "2026-02-28",
+      "2026-03-31",
+      "2026-04-30",
+      "2026-05-31",
+      "2026-06-30",
+      "2026-07-31",
+      "2026-08-31",
+      "2026-09-30"
+    ],
+    "Mutualistas": [
+      "2026-09-30"
+    ],
+    "Segmento 1": [
+      "2026-09-30"
+    ],
+    "Segmento 2": [
+      "2026-09-30"
+    ],
+    "Segmento 3": [
+      "2026-09-30"
+    ]
+  },
+  "conciliacion_activos": [
+    {
+      "fecha_corte": "2026-09-30",
+      "segmento": "Mutualistas",
+      "suma_entidades": "1473173953.70",
+      "total_publicado": "1473173953.7",
+      "diferencia": "0.00",
+      "coincide": true
+    },
+    {
+      "fecha_corte": "2026-09-30",
+      "segmento": "Segmento 1",
+      "suma_entidades": "25006287690.98",
+      "total_publicado": "25006287690.98001",
+      "diferencia": "-0.00001",
+      "coincide": true
+    },
+    {
+      "fecha_corte": "2026-09-30",
+      "segmento": "Segmento 2",
+      "suma_entidades": "3975539563.26",
+      "total_publicado": "3975539563.26",
+      "diferencia": "0.00",
+      "coincide": true
+    },
+    {
+      "fecha_corte": "2026-09-30",
+      "segmento": "Segmento 3",
+      "suma_entidades": "1606891851.05",
+      "total_publicado": "1606891851.0500002",
+      "diferencia": "-2E-7",
+      "coincide": true
+    }
+  ],
+  "ejemplos_no_validos": [
+    {
+      "fecha_corte": "2026-01-31",
+      "segmento": "CONAFIPS",
+      "entidad": "CORPORACION NACIONAL DE FINANZAS POPULARES Y SOLIDARIAS",
+      "es_total": "False",
+      "tipo": "cuenta",
+      "codigo": "1611",
+      "nombre": "Anticipo para adquisición de acciones y participaciones",
+      "unidad": "USD",
+      "valor": "None",
+      "estado": "sin_dato",
+      "archivo": "Boletin Financiero CONAFIPS_sep_2026.xlsm",
+      "hoja": "2. ESTADO FINANCIERO",
+      "celda": "E484",
+      "motivo": "Celda vacía o fórmula sin resultado guardado"
+    },
+    {
+      "fecha_corte": "2026-02-28",
+      "segmento": "CONAFIPS",
+      "entidad": "CORPORACION NACIONAL DE FINANZAS POPULARES Y SOLIDARIAS",
+      "es_total": "False",
+      "tipo": "cuenta",
+      "codigo": "1611",
+      "nombre": "Anticipo para adquisición de acciones y participaciones",
+      "unidad": "USD",
+      "valor": "None",
+      "estado": "sin_dato",
+      "archivo": "Boletin Financiero CONAFIPS_sep_2026.xlsm",
+      "hoja": "2. ESTADO FINANCIERO",
+      "celda": "F484",
+      "motivo": "Celda vacía o fórmula sin resultado guardado"
+    },
+    {
+      "fecha_corte": "2026-03-31",
+      "segmento": "CONAFIPS",
+      "entidad": "CORPORACION NACIONAL DE FINANZAS POPULARES Y SOLIDARIAS",
+      "es_total": "False",
+      "tipo": "cuenta",
+      "codigo": "1611",
+      "nombre": "Anticipo para adquisición de acciones y participaciones",
+      "unidad": "USD",
+      "valor": "None",
+      "estado": "sin_dato",
+      "archivo": "Boletin Financiero CONAFIPS_sep_2026.xlsm",
+      "hoja": "2. ESTADO FINANCIERO",
+      "celda": "G484",
+      "motivo": "Celda vacía o fórmula sin resultado guardado"
+    },
+    {
+      "fecha_corte": "2026-04-30",
+      "segmento": "CONAFIPS",
+      "entidad": "CORPORACION NACIONAL DE FINANZAS POPULARES Y SOLIDARIAS",
+      "es_total": "False",
+      "tipo": "cuenta",
+      "codigo": "1611",
+      "nombre": "Anticipo para adquisición de acciones y participaciones",
+      "unidad": "USD",
+      "valor": "None",
+      "estado": "sin_dato",
+      "archivo": "Boletin Financiero CONAFIPS_sep_2026.xlsm",
+      "hoja": "2. ESTADO FINANCIERO",
+      "celda": "H484",
+      "motivo": "Celda vacía o fórmula sin resultado guardado"
+    },
+    {
+      "fecha_corte": "2026-05-31",
+      "segmento": "CONAFIPS",
+      "entidad": "CORPORACION NACIONAL DE FINANZAS POPULARES Y SOLIDARIAS",
+      "es_total": "False",
+      "tipo": "cuenta",
+      "codigo": "1611",
+      "nombre": "Anticipo para adquisición de acciones y participaciones",
+      "unidad": "USD",
+      "valor": "None",
+      "estado": "sin_dato",
+      "archivo": "Boletin Financiero CONAFIPS_sep_2026.xlsm",
+      "hoja": "2. ESTADO FINANCIERO",
+      "celda": "I484",
+      "motivo": "Celda vacía o fórmula sin resultado guardado"
+    },
+    {
+      "fecha_corte": "2026-06-30",
+      "segmento": "CONAFIPS",
+      "entidad": "CORPORACION NACIONAL DE FINANZAS POPULARES Y SOLIDARIAS",
+      "es_total": "False",
+      "tipo": "cuenta",
+      "codigo": "1611",
+      "nombre": "Anticipo para adquisición de acciones y participaciones",
+      "unidad": "USD",
+      "valor": "None",
+      "estado": "sin_dato",
+      "archivo": "Boletin Financiero CONAFIPS_sep_2026.xlsm",
+      "hoja": "2. ESTADO FINANCIERO",
+      "celda": "J484",
+      "motivo": "Celda vacía o fórmula sin resultado guardado"
+    },
+    {
+      "fecha_corte": "2026-07-31",
+      "segmento": "CONAFIPS",
+      "entidad": "CORPORACION NACIONAL DE FINANZAS POPULARES Y SOLIDARIAS",
+      "es_total": "False",
+      "tipo": "cuenta",
+      "codigo": "1611",
+      "nombre": "Anticipo para adquisición de acciones y participaciones",
+      "unidad": "USD",
+      "valor": "None",
+      "estado": "sin_dato",
+      "archivo": "Boletin Financiero CONAFIPS_sep_2026.xlsm",
+      "hoja": "2. ESTADO FINANCIERO",
+      "celda": "K484",
+      "motivo": "Celda vacía o fórmula sin resultado guardado"
+    },
+    {
+      "fecha_corte": "2026-08-31",
+      "segmento": "CONAFIPS",
+      "entidad": "CORPORACION NACIONAL DE FINANZAS POPULARES Y SOLIDARIAS",
+      "es_total": "False",
+      "tipo": "cuenta",
+      "codigo": "1611",
+      "nombre": "Anticipo para adquisición de acciones y participaciones",
+      "unidad": "USD",
+      "valor": "None",
+      "estado": "sin_dato",
+      "archivo": "Boletin Financiero CONAFIPS_sep_2026.xlsm",
+      "hoja": "2. ESTADO FINANCIERO",
+      "celda": "L484",
+      "motivo": "Celda vacía o fórmula sin resultado guardado"
+    },
+    {
+      "fecha_corte": "2026-09-30",
+      "segmento": "CONAFIPS",
+      "entidad": "CORPORACION NACIONAL DE FINANZAS POPULARES Y SOLIDARIAS",
+      "es_total": "False",
+      "tipo": "cuenta",
+      "codigo": "1611",
+      "nombre": "Anticipo para adquisición de acciones y participaciones",
+      "unidad": "USD",
+      "valor": "None",
+      "estado": "sin_dato",
+      "archivo": "Boletin Financiero CONAFIPS_sep_2026.xlsm",
+      "hoja": "2. ESTADO FINANCIERO",
+      "celda": "M484",
+      "motivo": "Celda vacía o fórmula sin resultado guardado"
+    },
+    {
+      "fecha_corte": "2026-01-31",
+      "segmento": "CONAFIPS",
+      "entidad": "CORPORACION NACIONAL DE FINANZAS POPULARES Y SOLIDARIAS",
+      "es_total": "False",
+      "tipo": "cuenta",
+      "codigo": "161420",
+      "nombre": "Seguros",
+      "unidad": "USD",
+      "valor": "None",
+      "estado": "sin_dato",
+      "archivo": "Boletin Financiero CONAFIPS_sep_2026.xlsm",
+      "hoja": "2. ESTADO FINANCIERO",
+      "celda": "E490",
+      "motivo": "Celda vacía o fórmula sin resultado guardado"
+    }
+  ],
+  "alcance": "Lectura de valores guardados de hojas 2 y 5; no ejecuta macros ni valida Docker, PostgreSQL, n8n o Metabase."
+}

@@ -57,12 +57,14 @@ services:
       postgres:
         condition: service_healthy
   etl:
-    profiles: ["python-etl"]
     build: ./etl
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-seps}:${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD en .env}@postgres:5432/${POSTGRES_DB:-seps}
-      SOURCE_ZIP: /data/2026-OEPS-MEN.zip
+      PGHOST: postgres
+      PGDATABASE: ${POSTGRES_DB:-seps}
+      PGUSER: ${POSTGRES_USER:-seps}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD en .env}
+      SOURCE_ZIP: /data/2026-EEFF-MEN.zip
     volumes:
       - ./data:/data:ro
     ports:

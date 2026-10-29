@@ -79,7 +79,7 @@ if (-not $db) {
 if (-not $db.id) { throw 'No se pudo configurar la conexión a PostgreSQL.' }
 Write-Output ('Metabase: conexión PostgreSQL ID ' + $db.id)
 
-$collectionName = 'Prácticas SEPS 2026'
+$collectionName = 'Prácticas SEPS EEFF 2026'
 $collections = @(MbRequest -Path '/api/collection')
 $collection = $collections | Where-Object name -eq $collectionName | Select-Object -First 1
 if (-not $collection) {
@@ -87,24 +87,29 @@ if (-not $collection) {
 }
 
 $tags = @{
-  provincia = @{name='provincia';'display-name'='Provincia';type='text'}
-  sector = @{name='sector';'display-name'='Sector';type='text'}
+  segmento = @{name='segmento';'display-name'='Grupo o segmento';type='text'}
+  entidad = @{name='entidad';'display-name'='Entidad';type='text'}
+  periodo = @{name='periodo';'display-name'='Período AAAA-MM-DD';type='text'}
 }
+# Default: latest cut. Dates never sum together. Group totals are excluded in SQL views.
+$filter = " WHERE fecha_corte = COALESCE([[ CAST({{periodo}} AS date), ]] (SELECT MAX(fecha_corte) FROM seps_fin.valores)) [[ AND segmento = {{segmento}} ]] [[ AND entidad = {{entidad}} ]]"
 $q = @(
-  @{name='SEPS - Total último corte';display='scalar';sql='SELECT COUNT(*) AS total FROM seps.organizaciones WHERE fecha_corte = (SELECT MAX(fecha_corte) FROM seps.organizaciones) [[ AND provincia = {{provincia}} ]] [[ AND sector = {{sector}} ]]';pos=@(0,0,8,4)}
-  @{name='SEPS - Activas último corte';display='scalar';sql="SELECT COUNT(*) AS activas FROM seps.organizaciones WHERE fecha_corte = (SELECT MAX(fecha_corte) FROM seps.organizaciones) AND estado_juridico = 'ACTIVA' [[ AND provincia = {{provincia}} ]] [[ AND sector = {{sector}} ]]";pos=@(8,0,8,4)}
-  @{name='SEPS - Provincias último corte';display='scalar';sql="SELECT COUNT(DISTINCT provincia) AS provincias FROM seps.organizaciones WHERE fecha_corte = (SELECT MAX(fecha_corte) FROM seps.organizaciones) AND provincia NOT IN ('NO DEFINIDO', 'ZONA NO DELIMITADA') [[ AND provincia = {{provincia}} ]] [[ AND sector = {{sector}} ]]";pos=@(16,0,8,4)}
-  @{name='SEPS - Evolución mensual';display='line';sql='SELECT fecha_corte AS mes, COUNT(*) AS organizaciones FROM seps.organizaciones WHERE 1=1 [[ AND provincia = {{provincia}} ]] [[ AND sector = {{sector}} ]] GROUP BY fecha_corte ORDER BY fecha_corte';pos=@(0,4,24,8)}
-  @{name='SEPS - Por provincia';display='bar';sql='SELECT provincia,COUNT(*) AS organizaciones FROM seps.organizaciones WHERE fecha_corte=(SELECT MAX(fecha_corte) FROM seps.organizaciones) [[ AND provincia = {{provincia}} ]] [[ AND sector = {{sector}} ]] GROUP BY provincia ORDER BY organizaciones DESC';pos=@(0,12,12,9)}
-  @{name='SEPS - Por sector';display='pie';sql='SELECT sector,COUNT(*) AS organizaciones FROM seps.organizaciones WHERE fecha_corte=(SELECT MAX(fecha_corte) FROM seps.organizaciones) [[ AND provincia = {{provincia}} ]] [[ AND sector = {{sector}} ]] GROUP BY sector ORDER BY organizaciones DESC';pos=@(12,12,12,9)}
-  @{name='SEPS - Detalle provincial';display='table';sql='SELECT provincia,sector,estado_juridico,COUNT(*) AS organizaciones FROM seps.organizaciones WHERE fecha_corte=(SELECT MAX(fecha_corte) FROM seps.organizaciones) [[ AND provincia = {{provincia}} ]] [[ AND sector = {{sector}} ]] GROUP BY provincia,sector,estado_juridico ORDER BY organizaciones DESC LIMIT 50';pos=@(0,21,24,9)}
+  @{name='EEFF - Entidades del corte';display='scalar';sql=('SELECT COUNT(*) AS entidades FROM seps_fin.v_balance' + $filter);pos=@(0,0,6,4)}
+  @{name='EEFF - Activos USD del corte';display='scalar';sql=('SELECT CASE WHEN COUNT(activos)=COUNT(*) THEN SUM(activos) END AS activos_usd FROM seps_fin.v_balance' + $filter);pos=@(6,0,6,4)}
+  @{name='EEFF - Pasivos USD del corte';display='scalar';sql=('SELECT CASE WHEN COUNT(pasivos)=COUNT(*) THEN SUM(pasivos) END AS pasivos_usd FROM seps_fin.v_balance' + $filter);pos=@(12,0,6,4)}
+  @{name='EEFF - Patrimonio USD del corte';display='scalar';sql=('SELECT CASE WHEN COUNT(patrimonio)=COUNT(*) THEN SUM(patrimonio) END AS patrimonio_usd FROM seps_fin.v_balance' + $filter);pos=@(18,0,6,4)}
+  @{name='EEFF - Activos por grupo';display='bar';sql=('SELECT segmento,CASE WHEN COUNT(activos)=COUNT(*) THEN SUM(activos) END AS activos_usd FROM seps_fin.v_balance' + $filter + ' GROUP BY segmento ORDER BY activos_usd DESC');pos=@(0,4,12,8)}
+  @{name='EEFF - Balance por entidad USD';display='table';sql=('SELECT fecha_corte,segmento,entidad,activos,pasivos,patrimonio,ingresos,gastos FROM seps_fin.v_balance' + $filter + ' ORDER BY segmento,entidad');pos=@(12,4,12,8)}
+  @{name='EEFF - Indicadores por entidad';display='table';sql=('SELECT fecha_corte,segmento,entidad,nombre,valor_presentacion,CASE WHEN unidad=''proporcion'' THEN ''%'' ELSE unidad END AS unidad,estado FROM seps_fin.v_indicadores' + $filter + ' ORDER BY segmento,entidad,nombre');pos=@(0,12,24,10)}
 )
 $cards = @()
 $existingCards = @(MbRequest -Path '/api/card?f=all')
 foreach($item in $q) {
   $found = $existingCards | Where-Object name -eq $item.name | Select-Object -First 1
-  if (-not $found) {
-    $found = MbRequest -Method 'POST' -Path '/api/card' -Data @{
+  $cardMethod = 'POST'
+  $cardPath = '/api/card'
+  if ($found) { $cardMethod = 'PUT'; $cardPath = '/api/card/' + $found.id }
+  $found = MbRequest -Method $cardMethod -Path $cardPath -Data @{
       name = $item.name
       type = 'question'
       display = $item.display
@@ -116,17 +121,16 @@ foreach($item in $q) {
         native = @{query=$item.sql; 'template-tags'=$tags}
       }
     }
-  }
   if (-not $found.id) {throw ('Error creando pregunta ' + $item.name)}
   $cards += @{id=$found.id; pos=$item.pos; name=$item.name}
   Write-Output ('Pregunta: ' + $item.name + ' #' + $found.id)
 }
 $dashList = @(MbRequest -Path '/api/dashboard?f=all')
-$dash = $dashList | Where-Object name -eq 'Panorama SEPS 2026' | Select-Object -First 1
+$dash = $dashList | Where-Object name -eq 'Panorama financiero SEPS 2026' | Select-Object -First 1
 if (-not $dash) {
   $dash = MbRequest -Method 'POST' -Path '/api/dashboard' -Data @{
-    name = 'Panorama SEPS 2026'
-    description = 'Análisis oficial de Organizaciones EPS, cortes enero-agosto 2026'
+    name = 'Panorama financiero SEPS 2026'
+    description = 'Boletines financieros: corte por defecto septiembre 2026. Filtros exactos por grupo, entidad y período (AAAA-MM-DD). Indicadores en porcentaje, sin sumar tasas. Los totales de varios grupos no constituyen un balance consolidado.'
     collection_id = $collection.id
   }
 }
@@ -141,16 +145,18 @@ foreach($item in $cards) {
     size_x = $item.pos[2]
     size_y = $item.pos[3]
     parameter_mappings = @(
-      @{parameter_id='seps_provincia';card_id=[int]$item.id;target=@('variable',@('template-tag','provincia'))},
-      @{parameter_id='seps_sector';card_id=[int]$item.id;target=@('variable',@('template-tag','sector'))}
+      @{parameter_id='seps_segmento';card_id=[int]$item.id;target=@('variable',@('template-tag','segmento'))},
+      @{parameter_id='seps_entidad';card_id=[int]$item.id;target=@('variable',@('template-tag','entidad'))},
+      @{parameter_id='seps_periodo';card_id=[int]$item.id;target=@('variable',@('template-tag','periodo'))}
     )
   }
   $i += 1
 }
 $updated = MbRequest -Method 'PUT' -Path ('/api/dashboard/' + $dash.id) -Data @{
   parameters = @(
-    @{id='seps_provincia';name='Provincia';slug='provincia';type='string/='},
-    @{id='seps_sector';name='Sector';slug='sector';type='string/='}
+    @{id='seps_segmento';name='Grupo o segmento';slug='segmento';type='string/='},
+    @{id='seps_entidad';name='Entidad';slug='entidad';type='string/='},
+    @{id='seps_periodo';name='Período AAAA-MM-DD';slug='periodo';type='string/='}
   )
   dashcards = $dashcards
 }

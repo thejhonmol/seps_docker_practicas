@@ -1,11 +1,11 @@
 Actividad,Resultado aprendizaje,Entregable,Fecha programada,Fecha real,Estado,Evidencia
-1,RA2,Investigación n8n,,,Preparado,Pendiente captura/documentación
-2,RA2,Investigación Docker,,,Preparado,Pendiente captura/documentación
-3,RA5,Despliegue Docker,,,Verificado,Servicios PostgreSQL n8n y Metabase
-4,RA3,Normalización de datos,,,Verificado,SQL y auditoría CSV
-5,RA5,Base de datos PostgreSQL,,,Verificado,Schema y consultas
-6,RA5,ETL n8n,,,Verificado,Ejecución CLI status success
-7,RA5,Conexión PostgreSQL Metabase,,,Verificado,Consultas Metabase API completadas
-8,RA4,Dashboard Metabase,,,Verificado,Dashboard 2 con 7 preguntas y 2 filtros
-9,RA6,Informe ejecutivo,,,Borrador,Completar capturas y firma
-10,RA5,Entrega puntual de documentos,,,Por verificar,Registrar constancia de entrega
+1,RA2,"Estudio de las características, funcionamiento y arquitectura de n8n para automatizar procesos de tratamiento de datos financieros de la SEPS.",,,Pendiente de evidencia,Completar documentación y constancia real
+2,RA2,"Estudio de Docker, su arquitectura y funcionamiento de imágenes, contenedores, redes y volúmenes para desplegar aplicaciones.",,,Pendiente de evidencia,Completar documentación y constancia real
+3,RA5,"Configuración del entorno con Docker Compose para ejecutar n8n, PostgreSQL y Metabase en contenedores, garantizando comunicación y persistencia de datos.",,,Código preparado; ejecución pendiente,Validar nueva fuente en Docker y adjuntar captura
+4,RA3,"Limpieza y estructuración de los boletines financieros de la SEPS, estandarizando entidades, períodos, cuentas y valores para su almacenamiento y análisis.",,,Lectura local verificada,auditoria_fuente.json y pruebas del parser
+5,RA5,"Creación de la base de datos PostgreSQL en Docker, definiendo tablas, relaciones y restricciones para almacenar estados e indicadores financieros de la SEPS.",,,Código preparado; ejecución pendiente,Validar nueva fuente en Docker y adjuntar captura
+6,RA5,"Implementación de flujos en n8n sobre Docker para extraer, transformar y cargar los datos de los boletines financieros en PostgreSQL, verificando consistencia y duplicados.",,,Código preparado; ejecución pendiente,Validar nueva fuente en Docker y adjuntar captura
+7,RA5,Configuración de la conexión entre PostgreSQL y Metabase en Docker para analizar y visualizar la información financiera procesada mediante n8n.,,,Código preparado; ejecución pendiente,Validar nueva fuente en Docker y adjuntar captura
+8,RA4,"Elaboración de dashboards en Metabase con estados e indicadores financieros, incorporando gráficos, tablas y filtros por entidad, segmento y período.",,,Código preparado; ejecución pendiente,Validar nueva fuente en Docker y adjuntar captura
+9,RA6,Informe Ejecutivo de las prácticas preprofesionales.,,,Avance de medio ciclo,INFORME_EJECUTIVO_SEPS.md; completar capturas y firma
+10,RA5,Responsabilidad y puntualidad en la entrega de los documentos para el seguimiento y evaluación de las prácticas preprofesionales.,,,Por verificar,Registrar fechas y constancia de entrega

@@ -1,5 +1,5 @@
 {
-  "name": "SEPS 2026 - Importación y control de calidad",
+  "name": "SEPS EEFF 2026 - Boletines financieros",
   "nodes": [
     {
       "parameters": {},
@@ -7,27 +7,48 @@
       "name": "Ejecutar importación",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "http://etl:8080/run",
-        "options": {"timeout": 600000}
+        "options": {
+          "timeout": 600000
+        }
       },
       "id": "http-etl-seps",
       "name": "Importar y validar datos SEPS",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [470, 300]
+      "position": [
+        470,
+        300
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
           "combinator": "and",
           "conditions": [
-            {"id": "check-status", "leftValue": "={{ $json.status }}", "rightValue": "ok", "operator": {"type": "string", "operation": "equals"}}
+            {
+              "id": "check-status",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
           ]
         }
       },
@@ -35,17 +56,23 @@
       "name": "Importación correcta",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [710, 300]
+      "position": [
+        710,
+        300
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const r = $input.first().json; return [{json: {mensaje:'Carga SEPS realizada',importacion_id:r.importacion_id,registros_leidos:r.read,registros_validos:r.valid,registros_rechazados:r.rejected,fecha:new Date().toISOString()}}];"
+        "jsCode": "const r = $input.first().json; return [{json: {mensaje:'Carga de boletines financieros terminada',importacion_id:r.importacion_id,celdas_leidas:r.read,celdas_validas:r.valid,celdas_observadas:r.observed,sha256:r.sha256}}];"
       },
       "id": "summary-seps",
       "name": "Resumen ETL",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [960, 200]
+      "position": [
+        960,
+        200
+      ]
     },
     {
       "parameters": {
@@ -55,16 +82,56 @@
       "name": "Error de calidad",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [960, 410]
+      "position": [
+        960,
+        410
+      ]
     }
   ],
   "connections": {
-    "Ejecutar importación": {"main": [[{"node":"Importar y validar datos SEPS","type":"main","index":0}]]},
-    "Importar y validar datos SEPS": {"main": [[{"node":"Importación correcta","type":"main","index":0}]]},
-    "Importación correcta": {"main": [
-      [{"node":"Resumen ETL","type":"main","index":0}],
-      [{"node":"Error de calidad","type":"main","index":0}]
-    ]}
+    "Ejecutar importación": {
+      "main": [
+        [
+          {
+            "node": "Importar y validar datos SEPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Importar y validar datos SEPS": {
+      "main": [
+        [
+          {
+            "node": "Importación correcta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Importación correcta": {
+      "main": [
+        [
+          {
+            "node": "Resumen ETL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error de calidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": {"executionOrder": "v1"}
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "SEPS2026EEFF001"
 }

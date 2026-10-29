@@ -1,7 +1,8 @@
 .env
 data/*.zip
 data/*.txt
+data/**/*.xlsm
 n8n/*.secret.json
 __pycache__/
 *.py[cod]
-*$py.class
+.venv/

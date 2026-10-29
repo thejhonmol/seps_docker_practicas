@@ -55,7 +55,7 @@ $json = ConvertTo-Json -InputObject @($credential) -Depth 10 -Compress
 try {
   docker compose exec -T n8n n8n import:credentials --input=/seps-workflows/seps-credentials.secret.json --projectId=$projectId
   if ($LASTEXITCODE -ne 0) {throw 'Error importando la credencial PostgreSQL'}
-  docker compose exec -T n8n n8n import:workflow --input=/seps-workflows/workflow-seps-sql.json --projectId=$projectId
+  docker compose exec -T n8n n8n import:workflow --input=/seps-workflows/workflow-seps.json --projectId=$projectId
   if ($LASTEXITCODE -ne 0) {throw 'Error importando workflow SEPS'}
 } finally {
   # Los datos cifrados ya están en la base de n8n; no dejar JSON con claves.
